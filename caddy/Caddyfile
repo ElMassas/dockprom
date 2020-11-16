@@ -8,9 +8,9 @@
     tls off
 }
 
-:9093 {
+:8080 {
     basicauth / {$ADMIN_USER} {$ADMIN_PASSWORD}
-    proxy / alertmanager:9093 {
+    proxy / karma:8080 {
             transparent
         }
 

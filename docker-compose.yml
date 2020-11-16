@@ -10,7 +10,7 @@ volumes:
 
 services:
   prometheus:
-    image: prom/prometheus:v2.21.0
+    image: prom/prometheus:v2.21.1
     container_name: prometheus
     volumes:
       - ./prometheus:/etc/prometheus
@@ -25,6 +25,8 @@ services:
     restart: unless-stopped
     expose:
       - 9090
+    ports:
+      - "9090:9090"
     networks:
       - monitor-net
     labels:
@@ -39,8 +41,6 @@ services:
       - "--config.file=/etc/alertmanager/config.yml"
       - "--storage.path=/alertmanager"
     restart: unless-stopped
-    expose:
-      - 9093
     networks:
       - monitor-net
     labels:
@@ -54,8 +54,8 @@ services:
     restart: unless-stopped
     networks:
       - monitor-net
-    ports:
-      - "8080:8080"
+    expose:
+      - 8080
     labels:
       org.label-schema.group: "monitoring"
 
@@ -79,20 +79,6 @@ services:
     labels:
       org.label-schema.group: "monitoring"
 
-  blackbox:
-    image: prom/blackbox-exporter:v0.17.0
-    container_name: blackbox
-    volumes:
-      - ./blackbox/:/etc/blackboxexporter/
-    command:
-      - "--config.file=etc/blackboxexporter/config.yml"
-    dns: 1.1.1.1
-    restart: unless-stopped
-    networks:
-      - monitor-net
-    labels:
-      org.label-schema.group: "monitoring"
-
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:v0.37.0
     container_name: cadvisor
@@ -101,10 +87,9 @@ services:
       - /var/run:/var/run:rw
       - /sys:/sys:ro
       - /var/lib/docker:/var/lib/docker:ro
-      #- /cgroup:/cgroup:ro #doesn't work on MacOS only for Linux
     restart: unless-stopped
     expose:
-      - 8080
+      - 9093
     networks:
       - monitor-net
     labels:
@@ -116,7 +101,10 @@ services:
     volumes:
       - grafana_data:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/datasources:/etc/grafana/provisioning/datasources/
+      - ./grafana/setup.sh:/setup.sh
     environment:
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel
       - GF_SECURITY_ADMIN_USER=${ADMIN_USER:-admin}
       - GF_SECURITY_ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin}
       - GF_USERS_ALLOW_SIGN_UP=false
@@ -133,7 +121,7 @@ services:
     container_name: pushgateway
     restart: unless-stopped
     expose:
-      - 9050
+      - 9091
     networks:
       - monitor-net
     labels:
@@ -143,10 +131,10 @@ services:
     image: stefanprodan/caddy
     container_name: caddy
     ports:
-      - "3000:3000"
-      - "9090:9090"
-      - "9093:9093"
-      - "9050:9050"
+      - "3000:3000" # grafana
+      - "9090:9090" # prometheus server
+      - "8080:8080" # karma/alertmanager
+      - "9091:9091" # pushgateway
     volumes:
       - ./caddy:/etc/caddy
     environment:
