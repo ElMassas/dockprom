@@ -53,7 +53,7 @@ services:
     networks:
       - monitor-net
     expose:
-      - 8080
+      - 9093
     labels:
       org.label-schema.group: "monitoring"
 
@@ -88,7 +88,7 @@ services:
       #- /cgroup:/cgroup:ro #doesn't work on MacOS only for Linux
     restart: unless-stopped
     expose:
-      - 9093
+      - 8080
     networks:
       - monitor-net
     labels:
@@ -132,7 +132,7 @@ services:
     ports:
       - "3000:3000" # grafana
       - "9090:9090" # prometheus server
-      - "8080:8080" # karma/alertmanager
+      - "9093:9093" # karma/alertmanager
       - "9091:9091" # pushgateway
     volumes:
       - ./caddy:/etc/caddy
